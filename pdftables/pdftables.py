@@ -21,9 +21,11 @@ http://denis.papathanasiou.org/2010/08/04/extracting-text-images-from-pdf-files
 import sys
 import codecs
 
-from pdfminer.pdfparser import PDFParser, PDFDocument
+from pdfminer.pdfparser import PDFParser
+from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.pdfdevice import PDFDevice
+from pdfminer.pdfpage import PDFPage
 from pdfminer.layout import LAParams, LTPage
 from pdfminer.converter import PDFPageAggregator
 
@@ -60,6 +62,10 @@ TOP = 3
 RIGHT = 2
 BOTTOM = 1
 
+#FIXME: In order to keep backwards compatibility, 
+# should refector to take argument to return 
+# an iterator.  Is it necessary that Table know
+# about total length of document? 
 def get_tables(fh):
     """
     Return a list of 'tables' from the given file handle, where a table is a
@@ -67,16 +73,17 @@ def get_tables(fh):
     """
     result = []
     doc, interpreter, device = initialize_pdf_miner(fh)
-    doc_length = len(list(doc.get_pages()))
-    for i, pdf_page in enumerate(doc.get_pages()):
+
+    pdf_pages = list(PDFPage.create_pages(doc))
+    doc_length = pdf_pages
+    for i, pdf_page in enumerate(pdf_pages):
         #print("Trying page {}".format(i + 1))
-        if not page_contains_tables(pdf_page, interpreter, device):
+        interpreter.process_page(pdf_page)
+        # receive the LTPage object for the page.
+        processed_page = device.get_result()
+        if not page_contains_tables(processed_page, device):
             #print("Skipping page {}: no tables.".format(i + 1))
             continue
-
-        # receive the LTPage object for the page.
-        interpreter.process_page(pdf_page)
-        processed_page = device.get_result()
 
         (table, _) = page_to_tables(
             processed_page,
@@ -106,17 +113,12 @@ def crop_table(table):
             break
 
 
-def initialize_pdf_miner(fh):
+def initialize_pdf_miner(fh, password = None):
     # Create a PDF parser object associated with the file object.
     parser = PDFParser(fh)
     # Create a PDF document object that stores the document structure.
-    doc = PDFDocument()
-    # Connect the parser and document objects.
-    parser.set_document(doc)
-    doc.set_parser(parser)
-    # Supply the password for initialization.
-    # (If no password is set, give an empty string.)
-    doc.initialize("")
+    doc = PDFDocument(parser, password)
+
     # Check if the document allows text extraction. If not, abort.
     if not doc.is_extractable:
         raise ValueError("PDFDocument is_extractable was False.")
@@ -150,13 +152,10 @@ def contains_tables(fh):
             p in doc.get_pages()]
 
 
-def page_contains_tables(pdf_page, interpreter, device):
+def page_contains_tables(layout, device):
     # TODO: hide doc, interpreter, device inside a higher level Pdf class. It's
     # silly that we have to care about these (see function signature!!)
 
-    interpreter.process_page(pdf_page)
-    # receive the LTPage object for the page.
-    layout = device.get_result()
     box_list = LeafList().populate(layout)
     for item in box_list:
         assert isinstance(item, Leaf), "NOT LEAF"
