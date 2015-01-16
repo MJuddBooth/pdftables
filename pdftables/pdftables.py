@@ -20,6 +20,7 @@ http://denis.papathanasiou.org/2010/08/04/extracting-text-images-from-pdf-files
 
 import sys
 import codecs
+import logging
 
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument
@@ -37,6 +38,22 @@ from cStringIO import StringIO
 import math
 import numpy # TODO: remove this dependency
 from counter import Counter
+
+logger      = logging.getLogger("pdftables")
+    
+if not len(logger.handlers) or "pdftables.StreamHandler" not in [lh.name for lh in logger.handlers]:
+    logHandlerS = logging.StreamHandler()
+    logHandlerS.name = "pdftables.StreamHandler"
+    logHandlerS.setLevel(logging.DEBUG) # handle everything
+    logHandlerS.setFormatter(logging.Formatter("%(name)s.%(levelname)s: %(message)s")) 
+    logger.addHandler(logHandlerS)
+
+def setLogLevel(level): 
+    """ Control the level of logging for pdftables.  
+    """      
+    logger.setLevel(level)
+
+setLogLevel(logging.INFO)
 
 IS_TABLE_COLUMN_COUNT_THRESHOLD = 3
 IS_TABLE_ROW_COUNT_THRESHOLD = 3
@@ -63,9 +80,10 @@ RIGHT = 2
 BOTTOM = 1
 
 #FIXME: In order to keep backwards compatibility, 
-# should refector to take argument to return 
+# should refactor to take argument to return 
 # an iterator.  Is it necessary that Table know
 # about total length of document? 
+#
 def get_tables(fh):
     """
     Return a list of 'tables' from the given file handle, where a table is a
@@ -75,7 +93,7 @@ def get_tables(fh):
     doc, interpreter, device = initialize_pdf_miner(fh)
 
     pdf_pages = list(PDFPage.create_pages(doc))
-    doc_length = pdf_pages
+    doc_length = len(pdf_pages)
     for i, pdf_page in enumerate(pdf_pages):
         #print("Trying page {}".format(i + 1))
         interpreter.process_page(pdf_page)
@@ -94,6 +112,36 @@ def get_tables(fh):
         result.append(Table(table,i+1,doc_length,1,1))
 
     return result
+
+def iter_tables(fh, x_comb = None, y_comb = None, hints = []):
+    """
+    iterate over the tables in a document.  See get_tables for the non-iter version.
+    
+    :param x_comb: Specify x_comb and y_comb to override the automatic comb creation.  
+    :param y_comb: 
+    :param hints:  tuple of strings to search for to determine the y limits of the page. 
+    """
+    doc, interpreter, device = initialize_pdf_miner(fh)
+    
+    pdf_iter = PDFPage.create_pages(doc)
+
+    for i, pdf_page in enumerate(pdf_iter):   
+        interpreter.process_page(pdf_page)
+        # receive the LTPage object for the page.
+        processed_page = device.get_result()
+        if not page_contains_tables(processed_page, device):
+            #print("Skipping page {}: no tables.".format(i + 1))
+            continue
+
+        (table, diag) = page_to_tables(
+            processed_page,
+            extend_y=True,
+            hints=hints,
+            atomise=True, 
+            x_comb = x_comb,
+            y_comb = y_comb)
+        crop_table(table)
+        yield Table(table, i+1, -1, 1, 1), diag
 
 
 def crop_table(table):
@@ -467,7 +515,7 @@ def multi_column_detect(page):
     return pile, projection
 
 
-def page_to_tables(page, extend_y=False, hints=[], atomise=False):
+def page_to_tables(page, extend_y=False, hints=[], atomise=False, x_comb=None, y_comb=None):
     """
     Get a rectangular list of list of strings from one page of a document
     """
@@ -519,15 +567,17 @@ def page_to_tables(page, extend_y=False, hints=[], atomise=False):
         filtered_box_list, "row",
         erosion=erodelevel)
 
+    if not y_comb:
     #
-    y_comb = comb_from_projection(row_projection, rowThreshold, "row")
-    y_comb.reverse()
+        y_comb = comb_from_projection(row_projection, rowThreshold, "row")
+        y_comb.reverse()
 
+    if not x_comb:
     # columnThreshold = max(len(y_comb)*0.75,5)
-    x_comb = comb_from_projection(column_projection, columnThreshold, "column")
+        x_comb = comb_from_projection(column_projection, columnThreshold, "column")
 
-    x_comb[0] = minx
-    x_comb[-1] = maxx
+        x_comb[0] = minx
+        x_comb[-1] = maxx
 
     # Extend y_comb to page size if extend_y is true
     if extend_y:
@@ -582,7 +632,8 @@ def find_table_bounding_box(box_list, hints=[]):
         miny = None
         maxy = None
         #raise ValueError("table_threshold caught nothing")
-
+    #logger.debug("box=x:{},{};y:{},{}".format(minx, maxx, miny, maxy))
+    
     """The table miny and maxy can be modified by hints"""
     if hints:
         top_string = hints[0]  # "% Change"
@@ -593,6 +644,8 @@ def find_table_bounding_box(box_list, hints=[]):
             miny = hintedminy
         if hintedmaxy:
             maxy = hintedmaxy
+        #logger.debug("After hints, box=x:{},{};y:{},{}".format(minx, maxx, miny, maxy))
+        
     """Modify table minx and maxx with hints? """
 
     return (minx, maxx, miny, maxy)
