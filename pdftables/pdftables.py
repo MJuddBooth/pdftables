@@ -156,7 +156,7 @@ def crop_table(table):
 
     for row in list(reversed(table)):  # bottom -> top
         if not any(cell.strip() for cell in row):
-            table.remove(row)
+            table.pop()
         else:
             break
 
