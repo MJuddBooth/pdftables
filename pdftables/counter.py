@@ -3,14 +3,14 @@ from heapq import nlargest
 from itertools import repeat, ifilter
 
 class Counter(dict):
-    '''Dict subclass for counting hashable objects.  Sometimes called a bag
+    """Dict subclass for counting hashable objects.  Sometimes called a bag
     or multiset.  Elements are stored as dictionary keys and their counts
     are stored as dictionary values.
 
     >>> Counter('zyzygy')
     Counter({'y': 3, 'z': 2, 'g': 1})
 
-    '''
+    """
 
     def __init__(self, iterable=None, **kwds):
         '''Create a new, empty Counter object.  And if given, count elements
@@ -22,7 +22,7 @@ class Counter(dict):
         >>> c = Counter({'a': 4, 'b': 2})           # a new counter from a mapping
         >>> c = Counter(a=4, b=2)                   # a new counter from keyword args
 
-        '''        
+        '''
         self.update(iterable, **kwds)
 
     def __missing__(self, key):
@@ -35,7 +35,7 @@ class Counter(dict):
         >>> Counter('abracadabra').most_common(3)
         [('a', 5), ('r', 2), ('b', 2)]
 
-        '''        
+        '''
         if n is None:
             return sorted(self.iteritems(), key=itemgetter(1), reverse=True)
         return nlargest(n, self.iteritems(), key=itemgetter(1))
@@ -74,7 +74,7 @@ class Counter(dict):
         >>> c['h']                      # four 'h' in which, witch, and watch
         4
 
-        '''        
+        '''
         if iterable is not None:
             if hasattr(iterable, 'iteritems'):
                 if self:
@@ -186,4 +186,4 @@ class Counter(dict):
 
 if __name__ == '__main__':
     import doctest
-    print doctest.testmod()
+    print(doctest.testmod())

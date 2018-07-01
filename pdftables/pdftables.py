@@ -40,17 +40,17 @@ import numpy # TODO: remove this dependency
 from counter import Counter
 
 logger      = logging.getLogger("pdftables")
-    
+
 if not len(logger.handlers) or "pdftables.StreamHandler" not in [lh.name for lh in logger.handlers]:
     logHandlerS = logging.StreamHandler()
     logHandlerS.name = "pdftables.StreamHandler"
     logHandlerS.setLevel(logging.DEBUG) # handle everything
-    logHandlerS.setFormatter(logging.Formatter("%(name)s.%(levelname)s: %(message)s")) 
+    logHandlerS.setFormatter(logging.Formatter("%(name)s.%(levelname)s: %(message)s"))
     logger.addHandler(logHandlerS)
 
-def setLogLevel(level): 
-    """ Control the level of logging for pdftables.  
-    """      
+def setLogLevel(level):
+    """ Control the level of logging for pdftables.
+    """
     logger.setLevel(level)
 
 setLogLevel(logging.INFO)
@@ -79,10 +79,10 @@ TOP = 3
 RIGHT = 2
 BOTTOM = 1
 
-#FIXME: In order to keep backwards compatibility, 
-# should refactor to take argument to return 
+#FIXME: In order to keep backwards compatibility,
+# should refactor to take argument to return
 # an iterator.  Is it necessary that Table know
-# about total length of document? 
+# about total length of document?
 #
 def get_tables(fh):
     """
@@ -116,16 +116,16 @@ def get_tables(fh):
 def iter_tables(fh, x_comb = None, y_comb = None, hints = []):
     """
     iterate over the tables in a document.  See get_tables for the non-iter version.
-    
-    :param x_comb: Specify x_comb and y_comb to override the automatic comb creation.  
-    :param y_comb: 
-    :param hints:  tuple of strings to search for to determine the y limits of the page. 
+
+    :param x_comb: Specify x_comb and y_comb to override the automatic comb creation.
+    :param y_comb:
+    :param hints:  tuple of strings to search for to determine the y limits of the page.
     """
     doc, interpreter, device = initialize_pdf_miner(fh)
-    
+
     pdf_iter = PDFPage.create_pages(doc)
 
-    for i, pdf_page in enumerate(pdf_iter):   
+    for i, pdf_page in enumerate(pdf_iter):
         interpreter.process_page(pdf_page)
         # receive the LTPage object for the page.
         processed_page = device.get_result()
@@ -137,7 +137,7 @@ def iter_tables(fh, x_comb = None, y_comb = None, hints = []):
             processed_page,
             extend_y=True,
             hints=hints,
-            atomise=True, 
+            atomise=True,
             x_comb = x_comb,
             y_comb = y_comb)
         crop_table(table)
@@ -539,8 +539,8 @@ def page_to_tables(page, extend_y=False, hints=[], atomise=False, x_comb=None, y
 
     """If miny and maxy are None then we found no tables and should exit"""
     if miny is None and maxy is None:
-       print "found no tables"
-       return table_array, TableDiagnosticData()
+        print("found no tables")
+        return table_array, TableDiagnosticData()
 
     if atomise:
         box_list = box_list.filterByType(['LTPage', 'LTChar'])
@@ -633,7 +633,7 @@ def find_table_bounding_box(box_list, hints=[]):
         maxy = None
         #raise ValueError("table_threshold caught nothing")
     #logger.debug("box=x:{},{};y:{},{}".format(minx, maxx, miny, maxy))
-    
+
     """The table miny and maxy can be modified by hints"""
     if hints:
         top_string = hints[0]  # "% Change"
@@ -645,7 +645,7 @@ def find_table_bounding_box(box_list, hints=[]):
         if hintedmaxy:
             maxy = hintedmaxy
         #logger.debug("After hints, box=x:{},{};y:{},{}".format(minx, maxx, miny, maxy))
-        
+
     """Modify table minx and maxx with hints? """
 
     return (minx, maxx, miny, maxy)

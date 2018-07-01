@@ -15,11 +15,11 @@ Features
 
 * Done
   - now works with pdfminer 20140328
-
+  - use the iterators in pdfminer as iterators.  Better for large files.
+  
 * TODO (for now)
 
   - make backwards compatible with older versions of pdfminer.
-  - use the iterators in pdfminer as iterators.  Better for large files.
   - tidy up code base including PEP 8 compliance
   - review test cases and identify a set of pdf files to use for testing
   - Add some documentation

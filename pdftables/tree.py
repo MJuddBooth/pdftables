@@ -3,19 +3,19 @@
 # Ian Hopkinson, 2013-06-19
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
+
 """
 tree classes which hold the parsed PDF document data
 """
 
 import collections
-from counter import Counter
+from .counter import Counter
 
 def _rounder(val,tol):
-     """
+    """
      Utility function to round numbers to arbitrary tolerance
-     """
-     return round((1.0*val)/tol)*tol
+    """
+    return round((1.0*val)/tol)*tol
 
 class Histogram(Counter):
     def rounder(self, tol):

@@ -58,14 +58,14 @@ def plotpage(d):
     #plt.setp(ax1.get_yticklabels(),visible=False)
     ax1.yaxis.set_label_position("right")
 
-    if d.top_plot: 
+    if d.top_plot:
         axHistx = divider.append_axes("top", 1.2, pad=0.1, sharex=ax1)
         axHistx.plot(map(float,d.top_plot.keys()),map(float,d.top_plot.values()), color = 'red')
-        
+
     if d.left_plot:
         axHisty = divider.append_axes("left", 1.2, pad=0.1, sharey=ax1)
         axHisty.plot(map(float,d.left_plot.values()),map(float,d.left_plot.keys()), color = 'red')
-    
+
     if d.y_comb:
         miny = min(d.y_comb)
         maxy = max(d.y_comb)
@@ -98,14 +98,14 @@ def plothistogram(hist):
 
 def plotAllPages(fh):
     #tol = 5 # This is the tolerance for histogram rounding
-    
+
     fig_list = []
     ax1_list = []
-    
+
     doc, interpreter, device = pt.initialize_pdf_miner(fh)
     # print SelectedPDF
     Creator = doc.info[0]['Creator']
-    print "Created by: %s" % Creator
+    print("Created by: %s" % Creator)
     #flt = 'LTTextLineHorizontal'
     #flt = ['LTPage','LTTextLineHorizontal']
     # flt = ['LTPage','LTFigure','LTLine','LTRect','LTImage','LTTextLineHorizontal','LTCurve']
@@ -119,22 +119,22 @@ def plotAllPages(fh):
         box_list = LeafList().populate(layout, interested = flt)
 
         ModalHeight = pt.calculate_modal_height(box_list)
-        
+
         diagnostic_data = pt.TableDiagnosticData(
                 box_list,
                 {},
                 {},
                 [],
                 [])
-        
+
         fig, ax1 = plotpage(diagnostic_data)
         fig_list.append(fig)
         ax1_list.append(ax1)
-        
+
         title = "page %d" % (i+1)
         fig.suptitle(title)
         #print "Page %d" % (i+1), ElementCount
-        print box_list.count()
-        print "Modal character height: %d" % ModalHeight
+        print(box_list.count())
+        print("Modal character height: %d" % ModalHeight)
 
     return fig_list, ax1_list

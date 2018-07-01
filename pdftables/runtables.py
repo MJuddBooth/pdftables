@@ -24,7 +24,7 @@ PDF_TEST_FILES = os.path.join(os.pardir, 'fixtures\sample_data')
 hints = []
 # SelectedPDF = "cit0613.pdf"
 # pagenumber = 1 # Wierd - each word is a figure?. First page can be broken
-# down to boxes containing no text 
+# down to boxes containing no text
 #SelectedPDF = "COPAWEEKLYJUNE52013.pdf" #1
 #pagenumber = 1 # parses if we just accept the whole page as a table, extend_y = True
 #SelectedPDF = "COPAMONTHLYMay2013.pdf"
@@ -93,7 +93,7 @@ result = StringIO()
 (columns, rows) = get_dimensions(table)
 result.write("     {} columns, {} rows\n".format(columns, rows))
 
-print to_string(table)
+print(to_string(table))
 
 
 
